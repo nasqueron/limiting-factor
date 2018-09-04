@@ -12,3 +12,4 @@ diesel = { version = "1.0.0", features = ["postgres", "r2d2", "chrono"] }
 log = "^0.4.4"
 r2d2 = "^0.8.2"
 rocket = "^0.3.16"
+rocket_contrib = { version = "*", features = ["json"] }
