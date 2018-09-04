@@ -1,6 +1,10 @@
 [package]
 name = "limiting-factor"
 version = "0.1.0"
-authors = ["Sébastien Santoro <dereckson@espace-win.org>"]
+authors = [
+    "Sébastien Santoro <dereckson@espace-win.org>",
+]
+description = "Helper code to create a Rest API with Diesel and Rocket"
+license = "BSD-2-Clause"
 
 [dependencies]
