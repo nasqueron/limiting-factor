@@ -76,7 +76,7 @@ impl Deref for DatabaseConnection {
 ///    .mount("/", routes)
 ///    .launch();
 /// ```
-pub fn initialize_database_pool(url: String, max_size: u32) -> Result<PostgreSQLPool, PoolError> {
+pub fn initialize_database_pool(url: &str, max_size: u32) -> Result<PostgreSQLPool, PoolError> {
     let manager = ConnectionManager::<PgConnection>::new(url);
 
     Pool::builder()
