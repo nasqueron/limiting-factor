@@ -12,6 +12,7 @@ extern crate rocket_contrib;
 pub mod api;
 pub mod config;
 pub mod database;
+pub mod kernel;
 
 /*   -------------------------------------------------------------
      Custom types
