@@ -1,4 +1,6 @@
-//! This module allows to configure the API.
+//! # Service configuration.
+//!
+//! This module allows to configure the service.
 //!
 //! It provides a Config trait to build custom configuration implementation.
 //!

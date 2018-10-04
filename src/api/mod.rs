@@ -1,4 +1,4 @@
-//! # API module
+//! # Utilities for API.
 //!
 //! This module provides useful code to create easily APIs.
 

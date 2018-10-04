@@ -1,4 +1,4 @@
-//! # API module
+//! # Service execution utilities.
 //!
 //! Provides methods to start the server and handle the application
 
@@ -112,9 +112,10 @@ impl DefaultApplication {
     /// # Exit codes
     ///
     /// The software will exit with the following error codes:
-    /// 0: Exits gracefully (but currently we don't have a signal to ask the server to shutdown)
-    /// 1: Error during the application run (e.g. routes conflict or Rocket fairings issues)
-    /// 2: Error parsing the configuration (e.g. no database URL has been defined)
+    ///
+    ///   - 0: Graceful exit (currently not in use, as the application never stops)
+    ///   - 1: Error during the application run (e.g. routes conflict or Rocket fairings issues)
+    ///   - 2: Error parsing the configuration (e.g. no database URL has been defined)
     pub fn start_application (routes: Vec<Route>) {
         info!(target: "runner", "Server initialized.");
 

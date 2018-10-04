@@ -1,4 +1,4 @@
-//! # API module
+//! # API standard and JSON responses.
 //!
 //! This module provides useful traits and methods to craft API replies from an existing type.
 
