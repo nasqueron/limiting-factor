@@ -2,15 +2,17 @@
 //!
 //! This module provides useful traits and methods to craft API replies from an existing type.
 
-use std::error::Error;
-
-use diesel::result::DatabaseErrorInformation;
-use diesel::result::DatabaseErrorKind;
+#[cfg(feature = "pgsql")]
+use diesel::result::{DatabaseErrorInformation, DatabaseErrorKind, QueryResult};
+#[cfg(feature = "pgsql")]
 use diesel::result::Error as ResultError;
-use diesel::result::QueryResult;
+
 use rocket::http::Status;
 use rocket::response::Failure;
 use rocket_contrib::Json;
+
+#[cfg(feature = "pgsql")]
+use std::error::Error;
 
 /*   -------------------------------------------------------------
      Custom types
@@ -30,6 +32,7 @@ pub trait ApiResponse<T> {
     fn into_json_response(self) -> ApiJsonResponse<T>;
 }
 
+#[cfg(feature = "pgsql")]
 impl<T> ApiResponse<T> for QueryResult<T> {
     /// Prepares an API response from a query result.
     ///
@@ -92,6 +95,7 @@ pub trait FailureResponse {
     fn into_failure_response(self) -> Failure;
 }
 
+#[cfg(feature = "pgsql")]
 impl FailureResponse for ResultError {
     /// Consumes the error and creates a Failure 500 Internal server error response.
     fn into_failure_response(self) -> Failure {
@@ -109,6 +113,7 @@ pub fn build_internal_server_error_response(message: &str) -> Failure {
     Failure::from(Status::InternalServerError)
 }
 
+#[cfg(feature = "pgsql")]
 fn build_database_error_response(error_kind: DatabaseErrorKind, info: Box<dyn DatabaseErrorInformation>) -> Failure {
     match error_kind {
         // Case IIIa - The query tries to do an INSERT violating an unique constraint

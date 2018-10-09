@@ -28,10 +28,16 @@
 //!      "ALIVE"
 //!  }
 //!  ```
+//!
+//! Replacing `DefaultApplication` by `MinimalApplication` allows to use a lighter version
+//! of the library without Diesel dependencies or database use.
 
+#[cfg(feature = "pgsql")]
 extern crate diesel;
 extern crate dotenv;
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate log;
+#[cfg(feature = "pgsql")]
 extern crate r2d2;
 extern crate rocket;
 extern crate rocket_contrib;
@@ -42,8 +48,14 @@ extern crate rocket_contrib;
 
 pub mod api;
 pub mod config;
-pub mod database;
 pub mod kernel;
+
+/*   -------------------------------------------------------------
+     Optional public features modules offered by this crate
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+#[cfg(feature = "pgsql")]
+pub mod database;
 
 /*   -------------------------------------------------------------
      Custom types

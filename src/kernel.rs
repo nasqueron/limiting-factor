@@ -2,48 +2,38 @@
 //!
 //! Provides methods to start the server and handle the application
 
-use config::Config;
+use config::{Config, MinimalConfig};
+#[cfg(feature = "pgsql")]
 use config::DefaultConfig;
-use database::initialize_database_pool;
-use database::test_database_connection;
+#[cfg(feature = "pgsql")]
+use database::{initialize_database_pool, test_database_connection};
 use ErrorResult;
 use rocket::Route;
 use rocket::ignite;
 use std::process;
+use std::marker::PhantomData;
+use config::EnvironmentConfigurable;
 
 /*   -------------------------------------------------------------
-     Application
+     Service
 
      Allow to define config and routes. Launch a server.
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-pub trait Application {
+pub trait Service {
     fn get_config(&self) -> &dyn Config;
 
     fn get_routes(&self) -> &[Route];
 
-    fn launch_server(&mut self) -> ErrorResult<()> {
-        let config = self.get_config();
-        let routes = self.get_routes();
+    fn launch_server(&mut self) -> ErrorResult<()>;
 
-        ignite()
-            .manage(
-                initialize_database_pool(config.get_database_url(), config.get_database_pool_size())?
-            )
-            .mount(config.get_entry_point(), routes.to_vec())
-            .launch();
-
-        Ok(())
-    }
+    fn check_service_configuration(&self) -> ErrorResult<()>;
 
     fn run (&mut self) -> ErrorResult<()> {
         info!(target: "runner", "Server started.");
 
-        // Initial connection to test if the database configuration works
         {
-            let config = self.get_config();
-            test_database_connection(config.get_database_url())?;
-            info!(target: "runner", "Connection to database established.");
+            self.check_service_configuration()?
         }
 
         self.launch_server()?;
@@ -53,10 +43,150 @@ pub trait Application {
 }
 
 /*   -------------------------------------------------------------
-     Default application
+     Default service
+
+     Allow to define config and routes. Launch a server.
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+/// The default service offers a  pgsql database connection with Diesel and r2d2.
+#[cfg(feature = "pgsql")]
+pub struct DefaultService {
+    pub config: DefaultConfig,
+    pub routes: Box<Vec<Route>>,
+}
+
+#[cfg(feature = "pgsql")]
+impl Service for DefaultService {
+    fn get_config(&self) -> &dyn Config { &self.config }
+
+    fn get_routes(&self) -> &[Route] { self.routes.as_slice() }
+
+    fn launch_server(&mut self) -> ErrorResult<()> {
+        let config = self.get_config();
+        let routes = self.get_routes();
+
+        let mut server = ignite();
+
+        if config.with_database() {
+            server = server.manage(
+                initialize_database_pool(config.get_database_url(), config.get_database_pool_size())?
+            );
+        }
+
+        server
+            .mount(config.get_entry_point(), routes.to_vec())
+            .launch();
+
+        Ok(())
+    }
+
+    fn check_service_configuration(&self) -> ErrorResult<()> {
+        let config = self.get_config();
+        if config.with_database() {
+            test_database_connection(config.get_database_url())?;
+            info!(target: "runner", "Connection to database established.");
+        }
+
+        Ok(())
+    }
+}
+
+/*   -------------------------------------------------------------
+     Minimal service
+
+     Allow to define config and routes. Launch a server.
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+/// The minimal service allows to spawn a server without any extra feature.
+pub struct MinimalService {
+    pub config: MinimalConfig,
+    pub routes: Box<Vec<Route>>,
+}
+
+impl Service for MinimalService {
+    fn get_config(&self) -> &dyn Config { &self.config }
+
+    fn get_routes(&self) -> &[Route] { self.routes.as_slice() }
+
+    fn launch_server(&mut self) -> ErrorResult<()> {
+        let config = self.get_config();
+        let routes = self.get_routes();
+
+        ignite()
+            .mount(config.get_entry_point(), routes.to_vec())
+            .launch();
+
+        Ok(())
+    }
+
+    fn check_service_configuration(&self) -> ErrorResult<()> { Ok(()) }
+}
+
+/*   -------------------------------------------------------------
+     Base application as concrete implementation
 
      :: Application
      :: sui generis implementation
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+/// The application structure allows to encapsulate the service into a CLI application.
+///
+/// The application takes care to run the service and quits with a correct exit code.
+///
+/// It also takes care of initialisation logic like parse the environment to extract
+/// the configuration.
+pub struct Application<U>
+    where U: Config
+{
+    service: Box<dyn Service>,
+    config_type: PhantomData<U>,
+}
+
+impl<U> Application<U>
+    where U: Config + EnvironmentConfigurable
+{
+    pub fn new (config: U, routes: Vec<Route>) -> Self {
+        Application {
+            service: config.into_service(routes),
+            config_type: PhantomData,
+        }
+    }
+
+    /// Starts the application
+    ///
+    /// # Exit codes
+    ///
+    /// The software will exit with the following error codes:
+    ///
+    ///   - 0: Graceful exit (currently not in use, as the application never stops)
+    ///   - 1: Error during the application run (e.g. routes conflict or Rocket fairings issues)
+    ///   - 2: Error parsing the configuration (e.g. no database URL has been defined)
+    pub fn start (&mut self) {
+        info!(target: "runner", "Server initialized.");
+
+        if let Err(error) = self.service.run() {
+            error!(target: "runner", "{}", error.description());
+            process::exit(1);
+        }
+
+        process::exit(0);
+    }
+
+    pub fn start_application (routes: Vec<Route>) {
+        let config = <U>::parse_environment().unwrap_or_else(|_error| {
+            process::exit(2);
+        });
+
+        let mut app = Application::new(config, routes);
+        app.start();
+    }
+}
+
+/*   -------------------------------------------------------------
+     Default application
+
+     :: Application
+     :: sui generis implementation, wrapper for Application
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 /// The default application implements CLI program behavior to prepare a configuration from the
@@ -84,52 +214,27 @@ pub trait Application {
 /// ```
 ///
 /// The default configuration will be used and the server started.
-pub struct DefaultApplication {
-    config: DefaultConfig,
-    routes: Box<Vec<Route>>,
-}
+#[cfg(feature = "pgsql")]
+pub struct DefaultApplication {}
 
-impl Application for DefaultApplication {
-    fn get_config(&self) -> &dyn Config {
-        &self.config
-    }
-
-    fn get_routes(&self) -> &[Route] {
-        self.routes.as_slice()
-    }
-}
-
+#[cfg(feature = "pgsql")]
 impl DefaultApplication {
-    pub fn new (config: DefaultConfig, routes: Vec<Route>) -> Self {
-        DefaultApplication {
-            config,
-            routes: Box::new(routes),
-        }
-    }
-
-    /// Starts the application, prepares default configuration
-    ///
-    /// # Exit codes
-    ///
-    /// The software will exit with the following error codes:
-    ///
-    ///   - 0: Graceful exit (currently not in use, as the application never stops)
-    ///   - 1: Error during the application run (e.g. routes conflict or Rocket fairings issues)
-    ///   - 2: Error parsing the configuration (e.g. no database URL has been defined)
     pub fn start_application (routes: Vec<Route>) {
-        info!(target: "runner", "Server initialized.");
+        Application::<DefaultConfig>::start_application(routes);
+    }
+}
 
-        let config = DefaultConfig::parse_environment().unwrap_or_else(|_error| {
-            process::exit(2);
-        });
+/*   -------------------------------------------------------------
+     Minimal application
 
-        let mut app = Self::new(config, routes);
+     :: Application
+     :: sui generis implementation, wrapper for Application
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-        if let Err(error) = app.run() {
-            error!(target: "runner", "{}", error.description());
-            process::exit(1);
-        }
+pub struct MinimalApplication {}
 
-        process::exit(0);
+impl MinimalApplication {
+    pub fn start_application (routes: Vec<Route>) {
+        Application::<MinimalConfig>::start_application(routes);
     }
 }
