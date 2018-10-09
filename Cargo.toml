@@ -25,9 +25,11 @@ log = "^0.4.4"
 r2d2 = { version = "^0.8.2", optional = true }
 rocket = "^0.3.16"
 rocket_contrib = { version = "^0.3.16", features = [ "json" ] }
+serde = { version = "1.0", optional = true }
 
 [features]
-default = ["pgsql"]
-minimal = []
+default = ["pgsql", "serialization"]
+minimal = ["serialization"]
 
 pgsql = ["diesel", "r2d2"]
+serialization = ["serde"]

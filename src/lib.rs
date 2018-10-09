@@ -41,6 +41,8 @@ extern crate log;
 extern crate r2d2;
 extern crate rocket;
 extern crate rocket_contrib;
+#[cfg(feature = "serialization")]
+extern crate serde;
 
 /*   -------------------------------------------------------------
      Public modules offered by this crate

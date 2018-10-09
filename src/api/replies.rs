@@ -11,6 +11,9 @@ use rocket::http::Status;
 use rocket::response::Failure;
 use rocket_contrib::Json;
 
+#[cfg(feature = "serialization")]
+use serde::Serialize;
+
 #[cfg(feature = "pgsql")]
 use std::error::Error;
 
@@ -24,6 +27,8 @@ pub type ApiJsonResponse<T> = Result<Json<T>, Failure>;
      API Response
 
      :: Implementation for QueryResult (Diesel ORM)
+     :: Implementation for Json (Rocket contrib)
+     :: Implementation for Serialize (Serde)
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 /// This trait allows to consume an object into an HTTP response.
@@ -80,6 +85,29 @@ impl<T> ApiResponse<T> for QueryResult<T> {
                 _ => Err(error.into_failure_response()),
             }
         }
+    }
+}
+
+/// Prepares an API response from a JSON.
+impl<T> ApiResponse<T> for Json<T> {
+    fn into_json_response(self) -> ApiJsonResponse<T> {
+        Ok(self)
+    }
+}
+
+/// Prepares an API response from a Serde-serializable result.
+///
+/// This is probably the easiest way to convert most struct
+/// into API responders.
+///
+/// # Examples
+///
+#[cfg(feature = "serialization")]
+impl<T> ApiResponse<T> for T
+    where T: Serialize
+{
+    fn into_json_response(self) -> ApiJsonResponse<T> {
+        Ok(Json(self))
     }
 }
 
