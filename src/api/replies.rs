@@ -135,6 +135,14 @@ impl FailureResponse for ResultError {
      Helper methods to prepare API responses
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+pub fn build_not_found_response() -> Failure {
+    Failure::from(Status::NotFound)
+}
+
+pub fn build_bad_request_response() -> Failure {
+    Failure::from(Status::BadRequest)
+}
+
 pub fn build_internal_server_error_response(message: &str) -> Failure {
     warn!(target:"api", "{}", message);
 
