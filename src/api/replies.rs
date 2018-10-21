@@ -70,21 +70,21 @@ impl<T> ApiResponse<T> for QueryResult<T> {
     /// This will produce a JSON representation when the result is found,
     /// a 404 error when no result is found, a 500 error if there is a database issue.
     fn into_json_response(self) -> ApiJsonResponse<T> {
-        match self {
+        self
             // CASE I - The query returns one value, we return a JSON representation fo the item
-            Ok(item) => Ok(Json(item)),
-
-            Err(error) => match error {
+            .map(|item| Json(item))
+            .map_err(|error| match error {
                 // Case II - The query returns no result, we return a 404 Not found response
-                ResultError::NotFound => Err(Failure::from(Status::NotFound)),
+                ResultError::DatabaseError(kind, details) => {
+                    build_database_error_response(kind, details)
+                }
 
                 // Case III - We need to handle a database error, which could be a 400/409/500
-                ResultError::DatabaseError(kind, details) => Err(build_database_error_response(kind, details)),
+                ResultError::NotFound => Failure::from(Status::NotFound),
 
                 // Case IV - The error is probably server responsibility, log it and throw a 500
-                _ => Err(error.into_failure_response()),
-            }
-        }
+                _ => error.into_failure_response(),
+            })
     }
 }
 
