@@ -81,7 +81,7 @@ impl<T> ApiResponse<T> for QueryResult<T> {
                 // Case III - We need to handle a database error, which could be a 400/409/500
                 ResultError::DatabaseError(kind, details) => Err(build_database_error_response(kind, details)),
 
-                // Case IV - The error is probably server responsbility, log it and throw a 500
+                // Case IV - The error is probably server responsibility, log it and throw a 500
                 _ => Err(error.into_failure_response()),
             }
         }
