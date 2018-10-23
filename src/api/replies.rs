@@ -48,11 +48,11 @@ impl<T> ApiResponse<T> for QueryResult<T> {
     ///
     /// So result can be:
     ///   - Ok(T)
-    ///   - Err(any database error)
+    ///   - Err(E) where E is a Failure containing an HTTP error code according the situation
     ///
     /// # Examples
     ///
-    /// To offer a /player/foo route to serve player information from the player table:
+    /// To offer a /player/foo route to serve player information from the players table:
     ///
     /// ```
     /// use limiting_factor::api::ApiResponse;
@@ -69,18 +69,42 @@ impl<T> ApiResponse<T> for QueryResult<T> {
     ///
     /// This will produce a JSON representation when the result is found,
     /// a 404 error when no result is found, a 500 error if there is a database issue.
+    ///
+    /// To insert a new player in the same table:
+    ///
+    /// ```
+    /// use limiting_factor::api::ApiResponse;
+    /// use limiting_factor::api::ApiJsonResponse;
+    ///
+    /// #[post("/register", format="application/json", data="<user>")]
+    /// pub fn register(connection: DatabaseConnection,  user: Json<UserToRegister>) -> ApiJsonResponse<Player> {
+    ///     let user: UserToRegister = user.into_inner();
+    ///     let player_to_create = user.to_new_player();
+    ///
+    ///     diesel::insert_into(players)
+    ///         .values(&player_to_create)
+    ///         .get_result::<Player>(&*connection)
+    ///         .into_json_response()
+    /// }
+    /// ```
+    ///
+    /// This will produce a JSON representation of the newly inserted player if successful.
+    /// If the insert fails because of an unique constraint violation (e.g. an username already
+    /// taken), it returns a 409 Conflict.
+    /// If the failure is from a forreign key integrity constraint, it returns a 400.
+    /// If there is any other database issue, it returns a 500.
     fn into_json_response(self) -> ApiJsonResponse<T> {
         self
             // CASE I - The query returns one value, we return a JSON representation fo the item
             .map(|item| Json(item))
             .map_err(|error| match error {
                 // Case II - The query returns no result, we return a 404 Not found response
+                ResultError::NotFound => Failure::from(Status::NotFound),
+
+                // Case III -  We need to handle a database error, which could be a 400/409/500
                 ResultError::DatabaseError(kind, details) => {
                     build_database_error_response(kind, details)
                 }
-
-                // Case III - We need to handle a database error, which could be a 400/409/500
-                ResultError::NotFound => Failure::from(Status::NotFound),
 
                 // Case IV - The error is probably server responsibility, log it and throw a 500
                 _ => error.into_failure_response(),
