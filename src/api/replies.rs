@@ -91,7 +91,7 @@ impl<T> ApiResponse<T> for QueryResult<T> {
     /// This will produce a JSON representation of the newly inserted player if successful.
     /// If the insert fails because of an unique constraint violation (e.g. an username already
     /// taken), it returns a 409 Conflict.
-    /// If the failure is from a forreign key integrity constraint, it returns a 400.
+    /// If the failure is from a foreign key integrity constraint, it returns a 400.
     /// If there is any other database issue, it returns a 500.
     fn into_json_response(self) -> ApiJsonResponse<T> {
         self
