@@ -8,8 +8,7 @@ use diesel::result::{DatabaseErrorInformation, DatabaseErrorKind, QueryResult};
 use diesel::result::Error as ResultError;
 
 use rocket::http::Status;
-use rocket::response::Failure;
-use rocket_contrib::Json;
+use rocket_contrib::json::Json;
 
 #[cfg(feature = "serialization")]
 use serde::Serialize;
@@ -21,7 +20,7 @@ use std::error::Error;
      Custom types
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-pub type ApiJsonResponse<T> = Result<Json<T>, Failure>;
+pub type ApiJsonResponse<T> = Result<Json<T>, Status>;
 
 /*   -------------------------------------------------------------
      API Response
@@ -33,7 +32,7 @@ pub type ApiJsonResponse<T> = Result<Json<T>, Failure>;
 
 /// This trait allows to consume an object into an HTTP response.
 pub trait ApiResponse<T> {
-    /// Consumes the value and creates a JSON or a Failure result response.
+    /// Consumes the value and creates a JSON or a Status result response.
     fn into_json_response(self) -> ApiJsonResponse<T>;
 }
 
@@ -48,7 +47,7 @@ impl<T> ApiResponse<T> for QueryResult<T> {
     ///
     /// So result can be:
     ///   - Ok(T)
-    ///   - Err(E) where E is a Failure containing an HTTP error code according the situation
+    ///   - Err(E) where E is a Status containing an HTTP error code according the situation
     ///
     /// # Examples
     ///
@@ -99,7 +98,7 @@ impl<T> ApiResponse<T> for QueryResult<T> {
             .map(|item| Json(item))
             .map_err(|error| match error {
                 // Case II - The query returns no result, we return a 404 Not found response
-                ResultError::NotFound => Failure::from(Status::NotFound),
+                ResultError::NotFound => Status::NotFound,
 
                 // Case III -  We need to handle a database error, which could be a 400/409/500
                 ResultError::DatabaseError(kind, details) => {
@@ -144,13 +143,13 @@ impl<T> ApiResponse<T> for T
 /// This trait allows to consume an object into an HTTP failure response.
 pub trait FailureResponse {
     /// Consumes the variable and creates a Failure response .
-    fn into_failure_response(self) -> Failure;
+    fn into_failure_response(self) -> Status;
 }
 
 #[cfg(feature = "pgsql")]
 impl FailureResponse for ResultError {
-    /// Consumes the error and creates a Failure 500 Internal server error response.
-    fn into_failure_response(self) -> Failure {
+    /// Consumes the error and creates a 500 Internal server error Status response.
+    fn into_failure_response(self) -> Status {
         build_internal_server_error_response(self.description())
     }
 }
@@ -159,33 +158,35 @@ impl FailureResponse for ResultError {
      Helper methods to prepare API responses
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-pub fn build_not_found_response() -> Failure {
-    Failure::from(Status::NotFound)
+#[deprecated(since="0.6.0", note="Use directly Status::NotFound instead.")]
+pub fn build_not_found_response() -> Status {
+    Status::NotFound
 }
 
-pub fn build_bad_request_response() -> Failure {
-    Failure::from(Status::BadRequest)
+#[deprecated(since="0.6.0", note="Use directly Status::BadRequest instead.")]
+pub fn build_bad_request_response() -> Status {
+    Status::BadRequest
 }
 
-pub fn build_internal_server_error_response(message: &str) -> Failure {
+pub fn build_internal_server_error_response(message: &str) -> Status {
     warn!(target:"api", "{}", message);
 
-    Failure::from(Status::InternalServerError)
+    Status::InternalServerError
 }
 
 #[cfg(feature = "pgsql")]
-fn build_database_error_response(error_kind: DatabaseErrorKind, info: Box<dyn DatabaseErrorInformation>) -> Failure {
+fn build_database_error_response(error_kind: DatabaseErrorKind, info: Box<dyn DatabaseErrorInformation>) -> Status {
     match error_kind {
         // Case IIIa - The query tries to do an INSERT violating an unique constraint
         //             e.g. two INSERT with the same unique value
         //             We return a 409 Conflict
-        DatabaseErrorKind::UniqueViolation => Failure::from(Status::Conflict),
+        DatabaseErrorKind::UniqueViolation => Status::Conflict,
 
         // Case IIIb - The query violated a foreign key constraint
         //             e.g. an INSERT referring to a non existing user 1004
         //                  when there is no id 1004 in users table
         //             We return a 400 Bad request
-        DatabaseErrorKind::ForeignKeyViolation => Failure::from(Status::BadRequest),
+        DatabaseErrorKind::ForeignKeyViolation => Status::BadRequest,
 
         // Case IIIc - For other databases errors, the client responsibility isn't involved.
         _ => build_internal_server_error_response(info.message()),
