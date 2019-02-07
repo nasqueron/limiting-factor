@@ -15,7 +15,22 @@ and to maintain helper methods as a separate library.
 
 * Diesel, as PostgreSQL ORM, with r2d2 support to pool connections
 * Rocket, as web framework
-* Chrono, for date and time types 
+* Chrono, for date and time types
+
+## Compile
+
+### Windows
+
+You need to give to `rustc` some hints about where `libpq.lib` is.
+
+This is known to have worked:
+
+```
+setenv LIB "C:\Program Files\PostgreSQL\10\lib
+cargo clean
+cargo run
+```
+
 
 ## Credits
 
