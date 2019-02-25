@@ -48,7 +48,7 @@ pub trait Service {
      Allow to define config and routes. Launch a server.
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-/// The default service offers a  pgsql database connection with Diesel and r2d2.
+/// The default service offers a pgsql database connection with Diesel and r2d2.
 #[cfg(feature = "pgsql")]
 pub struct DefaultService {
     pub config: DefaultConfig,
