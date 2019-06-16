@@ -26,7 +26,7 @@ You need to give to `rustc` some hints about where `libpq.lib` is.
 This is known to have worked:
 
 ```
-setenv LIB "C:\Program Files\PostgreSQL\10\lib
+setenv LIB "C:\Program Files\PostgreSQL\10\lib"
 cargo clean
 cargo run
 ```
