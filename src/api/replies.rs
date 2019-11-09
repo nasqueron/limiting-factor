@@ -135,6 +135,33 @@ impl<T> ApiResponse<T> for T
 }
 
 /*   -------------------------------------------------------------
+     API Delete Response
+
+     :: Implementation for QueryResult (Diesel ORM)
+     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+#[cfg(feature = "pgsql")]
+/// This trait allows to consume an object into an HTTP response.
+///
+/// This response is a odd case for DELETE queries, which return
+/// a scalar with the rows deleted count value, or an error.
+pub trait ApiDeleteResponse<T> {
+    /// Consumes the value and creates a JSON or a Status result response.
+    fn into_delete_json_response(self) -> ApiJsonResponse<()>;
+}
+
+#[cfg(feature = "pgsql")]
+impl ApiDeleteResponse<usize> for QueryResult<usize> {
+    fn into_delete_json_response(self) -> ApiJsonResponse<()> {
+        match self {
+            Ok(0) => Err(Status::NotFound),
+            Ok(1) => Ok(Json(())),
+            _ => Err(Status::BadRequest),
+        }
+    }
+}
+
+/*   -------------------------------------------------------------
      Failure response
 
      :: Implementation for diesel::result::Error
