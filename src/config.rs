@@ -13,7 +13,6 @@ use kernel::DefaultService;
 use kernel::{MinimalService, Service};
 use rocket::Route;
 use std::env;
-use std::error::Error;
 use ErrorResult;
 
 /*   -------------------------------------------------------------
@@ -88,7 +87,7 @@ impl Config for DefaultConfig {
 impl EnvironmentConfigurable for DefaultConfig {
     fn parse_environment() -> ErrorResult<Self> {
         if let Err(error) = dotenv() {
-            warn!(target: "config", "Can't parse .env: {}", error.description());
+            warn!(target: "config", "Can't parse .env: {}", error);
         };
 
         let with_database = env::var("LF_DISABLE_DATABASE").is_err();
@@ -175,7 +174,7 @@ impl Config for MinimalConfig {
 impl EnvironmentConfigurable for MinimalConfig {
     fn parse_environment() -> ErrorResult<Self> {
         if let Err(error) = dotenv() {
-            warn!(target: "config", "Can't parse .env: {}", error.description());
+            warn!(target: "config", "Can't parse .env: {}", error);
         };
 
         let entry_point = env::var("API_ENTRY_POINT").unwrap_or(String::from("/"));

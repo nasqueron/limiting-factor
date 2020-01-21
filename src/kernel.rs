@@ -165,7 +165,7 @@ impl<U> Application<U>
         info!(target: "runner", "Server initialized.");
 
         if let Err(error) = self.service.run() {
-            error!(target: "runner", "{}", error.description());
+            error!(target: "runner", "{}", error);
             process::exit(1);
         }
 

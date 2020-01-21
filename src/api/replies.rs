@@ -13,9 +13,6 @@ use rocket_contrib::json::Json;
 #[cfg(feature = "serialization")]
 use serde::Serialize;
 
-#[cfg(feature = "pgsql")]
-use std::error::Error;
-
 /*   -------------------------------------------------------------
      Custom types
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -177,7 +174,7 @@ pub trait FailureResponse {
 impl FailureResponse for ResultError {
     /// Consumes the error and creates a 500 Internal server error Status response.
     fn into_failure_response(self) -> Status {
-        build_internal_server_error_response(self.description())
+        build_internal_server_error_response(&self.to_string())
     }
 }
 

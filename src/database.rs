@@ -19,7 +19,6 @@ use rocket::request::FromRequest;
 use rocket::request::Outcome as RequestOutcome;
 use rocket::Request;
 use rocket::State;
-use std::error::Error;
 use std::ops::Deref;
 
 /*   -------------------------------------------------------------
@@ -46,7 +45,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for DatabaseConnection {
         match pool.get() {
             Ok(connection) => Outcome::Success(DatabaseConnection(connection)),
             Err(error) => {
-                warn!(target:"request", "Can't get a connection from the pool: {}", error.description());
+                warn!(target:"request", "Can't get a connection from the pool: {}", error);
 
                 Outcome::Failure((Status::ServiceUnavailable, ()))
             },
