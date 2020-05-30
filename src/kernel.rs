@@ -52,7 +52,7 @@ pub trait Service {
 #[cfg(feature = "pgsql")]
 pub struct DefaultService {
     pub config: DefaultConfig,
-    pub routes: Box<Vec<Route>>,
+    pub routes: Vec<Route>,
 }
 
 #[cfg(feature = "pgsql")]
@@ -100,7 +100,7 @@ impl Service for DefaultService {
 /// The minimal service allows to spawn a server without any extra feature.
 pub struct MinimalService {
     pub config: MinimalConfig,
-    pub routes: Box<Vec<Route>>,
+    pub routes: Vec<Route>,
 }
 
 impl Service for MinimalService {

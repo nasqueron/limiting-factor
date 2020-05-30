@@ -76,7 +76,7 @@ impl Config for DefaultConfig {
     fn into_service(self, routes: Vec<Route>) -> Box<dyn Service> {
         let service = DefaultService {
             config: self,
-            routes: Box::new(routes),
+            routes,
         };
 
         Box::new(service)
@@ -164,7 +164,7 @@ impl Config for MinimalConfig {
     fn into_service(self, routes: Vec<Route>) -> Box<dyn Service> {
         let service = MinimalService {
             config: self,
-            routes: Box::new(routes),
+            routes,
         };
 
         Box::new(service)
