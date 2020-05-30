@@ -47,7 +47,7 @@ pub trait EnvironmentConfigurable {
 /// This is a default implementation of the `Config` trait, which extracts  the following variables
 /// from an .env file or environment:
 ///
-///   - `API_ENTRY_POINT` (facultative, by default `/`): the mouting point of the API methods
+///   - `API_ENTRY_POINT` (facultative, by default `/`): the mounting point of the API methods
 ///   - `DATABASE_URL` (mandatory): the URL to connect to your database
 ///   - `DATABASE_POOL_SIZE` (facultative, by default 4): the number of connections to open
 #[cfg(feature = "pgsql")]
@@ -139,7 +139,7 @@ impl EnvironmentConfigurable for DefaultConfig {
 /// This is a minimal implementation of the `Config` trait, which extracts the following variables
 /// from an .env file or environment:
 ///
-///   - `API_ENTRY_POINT` (facultative, by default `/`): the mouting point of the API methods
+///   - `API_ENTRY_POINT` (facultative, by default `/`): the mounting point of the API methods
 ///
 ///  It sets the server not to use a database.
 pub struct MinimalConfig {
