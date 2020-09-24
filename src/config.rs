@@ -104,7 +104,8 @@ impl EnvironmentConfigurable for DefaultConfig {
             }
         };
 
-        let entry_point = env::var("API_ENTRY_POINT").unwrap_or(String::from("/"));
+        let entry_point = env::var("API_ENTRY_POINT")
+            .unwrap_or_else(|_| String::from("/"));
 
         let database_pool_size = match env::var("DATABASE_POOL_SIZE") {
             Ok(variable) => {
@@ -177,7 +178,8 @@ impl EnvironmentConfigurable for MinimalConfig {
             warn!(target: "config", "Can't parse .env: {}", error);
         };
 
-        let entry_point = env::var("API_ENTRY_POINT").unwrap_or(String::from("/"));
+        let entry_point = env::var("API_ENTRY_POINT")
+            .unwrap_or_else(|_| String::from("/"));
 
         Ok(MinimalConfig {
             entry_point,
