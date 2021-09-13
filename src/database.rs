@@ -4,7 +4,7 @@
 //! It leverages diesel and r2d2.
 //!
 //! Most code comes from the Rocket manual:
-//! https://rocket.rs/guide/state/#databases
+//! <https://rocket.rs/guide/state/#databases>
 
 use diesel::Connection;
 use diesel::pg::PgConnection;
