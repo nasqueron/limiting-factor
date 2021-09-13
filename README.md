@@ -23,14 +23,15 @@ and to maintain helper methods as a separate library.
 
 You need to give to `rustc` some hints about where `libpq.lib` is.
 
-This is known to have worked:
+The pq-sys crate offers a build script to find the library
+and then print the relevant hints.
+
+You can manually set your PostgreSQL library folder with:
 
 ```
-setenv LIB "C:\Program Files\PostgreSQL\10\lib"
-cargo clean
+export PQ_LIB_DIR="C:\Program Files\PostgreSQL\13\lib"
 cargo run
 ```
-
 
 ## Credits
 
