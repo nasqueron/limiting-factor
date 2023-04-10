@@ -19,13 +19,13 @@ license = "BSD-2-Clause"
 repository = "https://devcentral.nasqueron.org/source/limiting-factor/"
 
 [dependencies]
-diesel = { version = "^1.4.7", features = ["postgres", "r2d2", "chrono"], optional = true }
+diesel = { version = "^1.4.8", features = ["postgres", "r2d2", "chrono"], optional = true }
 dotenv = "^0.15.0"
 log = "^0.4.14"
-r2d2 = { version = "^0.8.9", optional = true }
-rocket = "^0.4.10"
-rocket_contrib = { version = "^0.4.10", features = [ "json" ] }
-serde = { version = "^1.0.130", optional = true }
+r2d2 = { version = "^0.8.10", optional = true }
+rocket = "^0.4.11"
+rocket_contrib = { version = "^0.4.11", features = [ "json" ] }
+serde = { version = "^1.0.159", optional = true }
 
 [features]
 default = ["minimal"]
