@@ -1,6 +1,6 @@
 node('rust') {
     stage('Checkout') {
-        git 'https://devcentral.nasqueron.org/source/limiting-factor.git', branch: 'main'
+        git url: 'https://devcentral.nasqueron.org/source/limiting-factor.git', branch: 'main'
     }
 
     try {
