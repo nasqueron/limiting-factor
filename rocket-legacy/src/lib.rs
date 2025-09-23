@@ -44,6 +44,8 @@ extern crate rocket_contrib;
 #[cfg(feature = "serialization")]
 extern crate serde;
 
+extern crate limiting_factor_core;
+
 /*   -------------------------------------------------------------
      Public modules offered by this crate
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */

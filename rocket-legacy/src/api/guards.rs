@@ -6,87 +6,42 @@ use rocket::data::{FromDataSimple, Outcome};
 use rocket::{Data, Request};
 use rocket::http::Status;
 use rocket::Outcome::{Failure, Success};
-use serde::{Deserialize, Serialize};
 
 use std::io::Read;
 
-/// The maximum number of characters to read, to avoid DoS
-const REQUEST_BODY_LIMIT: u64 = 1_000_000;
+use limiting_factor_core::api::guards::{RequestBody, REQUEST_BODY_LIMIT};
 
-/// A String representation of the request body. Useful when you need to pass it through as is.
-#[derive(Serialize, Deserialize, PartialOrd, PartialEq, Eq, Ord)]
-pub struct RequestBody {
-    /// The UTF-8 content of the request body
-    pub content: String,
-}
+// New-type wrapper for Rocket-specific implementations
+#[derive(Debug, Clone)]
+pub struct RocketRequestBody(pub RequestBody);
 
-impl RequestBody {
-    pub fn new () -> Self {
-        Self {
-            content: String::new(),
-        }
+impl RocketRequestBody {
+    pub fn new() -> Self {
+        Self(RequestBody::new())
     }
 
-    /// Convert the request body into a string
-    pub fn into_string (self) -> String {
-        self.content
+    // Delegate methods
+    pub fn into_string(self) -> String {
+        self.0.into_string()
     }
 
-    /// Convert the request body into a string, or None if it's empty
-    pub fn into_optional_string (self) -> Option<String> {
-        if self.content.is_empty() {
-            None
-        } else {
-            Some(self.content)
-        }
+    pub fn into_optional_string(self) -> Option<String> {
+        self.0.into_optional_string()
     }
 }
 
-impl FromDataSimple for RequestBody {
+const ROCKET_REQUEST_BODY_LIMIT: u64 = REQUEST_BODY_LIMIT as u64;
+
+impl FromDataSimple for RocketRequestBody {
     type Error = String;
 
     fn from_data(_request: &Request, data: Data) -> Outcome<Self, Self::Error> {
         let mut content = String::new();
 
-        if let Err(e) = data.open().take(REQUEST_BODY_LIMIT).read_to_string(&mut content) {
+        if let Err(e) = data.open().take(ROCKET_REQUEST_BODY_LIMIT).read_to_string(&mut content) {
             return Failure((Status::InternalServerError, format!("{:?}", e)));
         }
 
-        Success(Self { content })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_request_body_new () {
-        let body = RequestBody::new();
-        assert_eq!(0, body.content.len(), "Content should be empty");
-    }
-
-    #[test]
-    fn test_request_body_into_string () {
-        let body = RequestBody { content: "quux".to_string() };
-        assert_eq!(String::from("quux"), body.into_string());
-    }
-
-    #[test]
-    fn test_request_body_into_string_when_empty () {
-        let body = RequestBody::new();
-        assert_eq!(String::new(), body.into_string(), "Content should be empty");
-    }
-
-    #[test]
-    fn test_request_body_into_optional_string () {
-        let body = RequestBody { content: "quux".to_string() };
-        assert_eq!(Some(String::from("quux")), body.into_optional_string());
-    }
-
-    #[test]
-    fn test_request_body_into_optional_string_when_empty () {
-        let body = RequestBody::new();
-        assert_eq!(None, body.into_optional_string());
+        Success(Self(RequestBody { content }))
     }
 }

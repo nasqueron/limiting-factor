@@ -1,0 +1,21 @@
+[package]
+name = "limiting-factor-core"
+version = "1.0.0"
+authors = [
+    "Sébastien Santoro <dereckson@espace-win.org>",
+]
+description = "Library to create a REST API with web frameworks"
+readme = "../README.md"
+keywords = [
+    "API",
+    "REST",
+]
+categories = [
+    "web-programming",
+]
+license = "BSD-2-Clause"
+repository = "https://devcentral.nasqueron.org/source/limiting-factor/"
+edition = "2024"
+
+[dependencies]
+serde = { version = "1.0.226", features = ["derive"] }
