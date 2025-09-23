@@ -4,14 +4,18 @@ node('rust') {
     }
 
     try {
+        stage('Toolchain') {
+            sh 'rustup override set nightly-2024-12-15'
+        }
+
         stage('Build')  {
-            sh 'cargo build'
+            sh 'cd rocket-legacy && cargo build'
         }
 
         stage('Doc') {
-            sh 'cargo doc --no-deps'
+            sh 'cd rocket-legacy && cargo doc --no-deps'
         }
     } finally {
-         archiveArtifacts artifacts: 'target/doc/**', onlyIfSuccessful: true
+         archiveArtifacts artifacts: 'rocket-legacy/target/doc/**', onlyIfSuccessful: true
     }
 }
