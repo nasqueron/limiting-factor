@@ -50,6 +50,16 @@ pub trait FailureResponse {
     fn response(&self) -> String;
 }
 
+impl FailureResponse for StatusCode {
+    fn status_code(&self) -> StatusCode {
+        self.clone()
+    }
+
+    fn response(&self) -> String {
+        self.canonical_reason().unwrap_or_default().to_string()
+    }
+}
+
 impl<T, E> ApiResponse<T> for Result<T, E>
     where T: ApiResponse<T>, E: FailureResponse
 {

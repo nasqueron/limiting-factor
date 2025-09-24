@@ -55,6 +55,13 @@ impl App {
         self
     }
 
+    pub fn from_router(router: Router) -> Self {
+        Self {
+            config: ServerConfig::from_env(),
+            router,
+        }
+    }
+
     fn resolve_router(&self) -> Router {
         if self.config.mount_point == "/" {
             return self.router.clone();
